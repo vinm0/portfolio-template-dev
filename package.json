@@ -1,0 +1,84 @@
+{
+  "name": "portfolio-template",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "jest --watch",
+    "test:ci": "jest --ci",
+    "test:coverage": "jest --coverage",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.23.6",
+    "lucide-react": "^0.525.0",
+    "next-themes": "^0.4.6",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "tailwind-merge": "^3.3.1"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.19.7",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9",
+    "eslint-config-next": "15.4.1",
+    "next": "^15.4.2-canary.1",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.11",
+    "ts-jest": "^29.4.0",
+    "typescript": "^5"
+  },
+  "eslintConfig": {
+    "extends": [
+      "plugin:react/recommended",
+      "plugin:@typescript-eslint/recommended",
+      "plugin:jest/recommended",
+      "next/core-web-vitals",
+      "next/typescript"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true
+      },
+      "ecmaVersion": 2020,
+      "sourceType": "module"
+    },
+    "plugins": [
+      "react",
+      "@typescript-eslint",
+      "jest"
+    ],
+    "rules": {
+      "tab-width": [
+        "error",
+        2
+      ],
+      "indent": [
+        "error",
+        "tab"
+      ],
+      "@typescript-eslint/indent": [
+        "error",
+        "tab"
+      ],
+      "semi": [
+        "error",
+        "never"
+      ],
+      "quotes": [
+        "error",
+        "single"
+      ]
+    }
+  }
+}
