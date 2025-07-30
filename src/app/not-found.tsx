@@ -6,7 +6,7 @@ const NotFound: React.FC = () => (
         <h1>404 - Page Not Found</h1>
         <p>Sorry, the page you are looking for does not exist.</p>
         <Link href="/">
-            <a style={{ color: "#0070f3", textDecoration: "underline" }}>Go back home</a>
+            <span style={{ color: "#0070f3", textDecoration: "underline" }}>Go back home</span>
         </Link>
     </div>
 );

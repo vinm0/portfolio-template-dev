@@ -192,6 +192,11 @@ Create a `.env.local` file for local development:
 SENDGRID_API_KEY=your_sendgrid_key
 RESEND_API_KEY=your_resend_key
 
+# Admin authentication
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=admin123
+JWT_SECRET=your_jwt_secret_key_minimum_32_characters
+
 # Blog management (optional)
 BLOG_ADMIN_PASSWORD=your_admin_password
 GITHUB_TOKEN=your_github_token_for_content_management
@@ -224,12 +229,23 @@ npm run blog:deploy    # Deploy blog updates
 
 ## 🔄 Content Management Workflow
 
+### Admin Access
+1. Navigate to `/admin/login` to access the admin panel
+2. Login with your admin credentials (set in environment variables)
+3. Use the dashboard to manage all site content
+
 ### Blog Posts
 1. Use the blog creation form at `/admin/blog/new`
-2. Write content using the rich text editor
+2. Write content using the rich text editor with Markdown support
 3. Add tags, metadata, and SEO information
 4. Save as draft or publish immediately
 5. Individual blog posts are accessible at `/blog/[slug]`
+
+### Site Settings
+1. Access site configuration at `/admin/settings`
+2. Update contact information, social links, and availability status
+3. Manage resume URL and site metadata
+4. Configure site-wide settings and preferences
 
 ### Project Showcases
 1. Create detailed project documentation in `/work/[slug]`
