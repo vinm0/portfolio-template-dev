@@ -3,7 +3,7 @@
 import { motion } from "framer-motion"
 import { Github, Linkedin, Twitter, ArrowUp, Heart } from "lucide-react"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils/utils"
 import { AUTHOR, CONTACT, SOCIALS } from "@/lib/constants/brand"
 
 const quickLinks = [

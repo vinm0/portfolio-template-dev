@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { ChevronDown, Download, Mail } from "lucide-react"
 import { motion } from "framer-motion"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils/utils"
 import { AUTHOR } from "@/lib/constants/brand"
 
 const taglines = [

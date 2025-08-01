@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { checkAuthFromCookies } from '@/lib/auth'
+import { checkAuthFromCookies } from '@/lib/utils/auth'
 
 export async function POST(request: NextRequest) {
 	const cookieStore = await cookies()

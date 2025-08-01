@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { motion } from "framer-motion"
 import { ExternalLink, Github, ChevronDown, ChevronUp } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils/utils"
 import AnimatedGrid from "../ui/animations/AnimatedGrid"
 import Modal from "../ui/Modal"
 

@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
-import { markdownToHtml, markdownToHtmlPreview, extractMediaPlaceholders } from '@/lib/markdown'
+import { markdownToHtml, markdownToHtmlPreview, extractMediaPlaceholders } from '@/lib/utils/markdown'
+import { useSyntaxHighlighting } from '@/lib/utils/useSyntaxHighlighting'
 
 interface MediaItem {
 	id: string
@@ -23,6 +24,21 @@ interface BlogFormData {
 	status: 'published' | 'draft'
 	publishedAt: string | null
 	mediaItems: MediaItem[]
+	// Metadata fields
+	category: string
+	author: string
+	authorEmail?: string
+	authorBio?: string
+	featuredImage?: string
+	metaTitle?: string
+	metaDescription?: string
+	canonicalUrl?: string
+	readingTime?: number
+	priority: 'low' | 'normal' | 'high'
+	allowComments: boolean
+	seoKeywords: string[]
+	language: string
+	lastModified?: string
 }
 
 interface MediaModalData {
@@ -42,12 +58,27 @@ export default function NewBlogPost() {
 		tags: [],
 		status: 'draft',
 		publishedAt: null,
-		mediaItems: []
+		mediaItems: [],
+		// Metadata defaults
+		category: '',
+		author: '',
+		authorEmail: '',
+		authorBio: '',
+		featuredImage: '',
+		metaTitle: '',
+		metaDescription: '',
+		canonicalUrl: '',
+		priority: 'normal',
+		allowComments: true,
+		seoKeywords: [],
+		language: 'en'
 	})
 	const [tagInput, setTagInput] = useState('')
+	const [seoKeywordInput, setSeoKeywordInput] = useState('')
 	const [isLoading, setIsLoading] = useState(false)
 	const [previewMode, setPreviewMode] = useState(false)
 	const [previewHtml, setPreviewHtml] = useState('')
+	const [showMetadata, setShowMetadata] = useState(false)
 
 	// Media modal state
 	const [showMediaModal, setShowMediaModal] = useState(false)
@@ -55,6 +86,9 @@ export default function NewBlogPost() {
 	const [editingMediaId, setEditingMediaId] = useState<string | null>(null)
 
 	const router = useRouter()
+
+	// Apply syntax highlighting to code blocks
+	useSyntaxHighlighting()
 
 	const generateSlug = (title: string) => {
 		return title
@@ -67,7 +101,9 @@ export default function NewBlogPost() {
 		setFormData(prev => ({
 			...prev,
 			title,
-			slug: generateSlug(title)
+			slug: generateSlug(title),
+			// Auto-populate metaTitle if empty
+			metaTitle: prev.metaTitle || title
 		}))
 	}
 
@@ -87,6 +123,38 @@ export default function NewBlogPost() {
 			tags: prev.tags.filter(tag => tag !== tagToRemove)
 		}))
 	}
+
+	const addSeoKeyword = () => {
+		if (seoKeywordInput.trim() && !formData.seoKeywords.includes(seoKeywordInput.trim())) {
+			setFormData(prev => ({
+				...prev,
+				seoKeywords: [...prev.seoKeywords, seoKeywordInput.trim()]
+			}))
+			setSeoKeywordInput('')
+		}
+	}
+
+	const removeSeoKeyword = (keywordToRemove: string) => {
+		setFormData(prev => ({
+			...prev,
+			seoKeywords: prev.seoKeywords.filter(keyword => keyword !== keywordToRemove)
+		}))
+	}
+
+	// Calculate reading time based on content
+	const calculateReadingTime = (content: string) => {
+		const wordsPerMinute = 200
+		const words = content.trim().split(/\s+/).length
+		return Math.ceil(words / wordsPerMinute)
+	}
+
+	// Update reading time when content changes
+	useEffect(() => {
+		if (formData.content) {
+			const readingTime = calculateReadingTime(formData.content)
+			setFormData(prev => ({ ...prev, readingTime }))
+		}
+	}, [formData.content])
 
 	// Media handling functions
 	const handleMediaAttach = (file: File, type: 'image' | 'video' | 'audio') => {
@@ -205,7 +273,15 @@ export default function NewBlogPost() {
 				...formData,
 				htmlContent: html,
 				mediaItems: uploadedMediaItems,
-				publishedAt: formData.status === 'published' ? new Date().toISOString() : null
+				publishedAt: formData.status === 'published'
+					? (formData.publishedAt || new Date().toISOString())
+					: formData.publishedAt,
+				lastModified: new Date().toISOString(),
+				// Ensure required fields have defaults
+				author: formData.author || 'Anonymous',
+				category: formData.category || 'Uncategorized',
+				metaTitle: formData.metaTitle || formData.title,
+				metaDescription: formData.metaDescription || formData.excerpt
 			}
 
 			const response = await fetch('/api/admin/blog', {
@@ -268,6 +344,7 @@ export default function NewBlogPost() {
 						</div>
 
 						{/* Slug */}
+						{/* TODO: Verify slug uniqueness against existing posts */}
 						<div>
 							<label htmlFor="slug" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
 								URL Slug
@@ -494,6 +571,290 @@ export default function NewBlogPost() {
 							)}
 						</div>
 
+						{/* Metadata Section */}
+						<div className="border border-slate-200 dark:border-slate-600 rounded-lg">
+							<button
+								type="button"
+								onClick={() => setShowMetadata(!showMetadata)}
+								className="w-full px-4 py-3 text-left flex items-center justify-between bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-t-lg"
+							>
+								<span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+									Metadata & SEO Settings
+								</span>
+								<svg
+									className={`w-5 h-5 text-slate-500 transition-transform ${showMetadata ? 'rotate-180' : ''}`}
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+								</svg>
+							</button>
+
+							{showMetadata && (
+								<div className="p-4 space-y-4">
+									{/* Post Date */}
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+										<div>
+											<label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+												Publish Date
+											</label>
+											<input
+												type="datetime-local"
+												value={formData.publishedAt ? new Date(formData.publishedAt).toISOString().slice(0, 16) : ''}
+												onChange={(e) => setFormData(prev => ({
+													...prev,
+													publishedAt: e.target.value ? new Date(e.target.value).toISOString() : null
+												}))}
+												className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+											/>
+											<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+												Leave empty to use current date when publishing
+											</p>
+										</div>
+										<div>
+											<label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+												Category
+											</label>
+											<input
+												type="text"
+												value={formData.category}
+												onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+												className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+												placeholder="e.g., Technology, Design, Business"
+											/>
+										</div>
+									</div>
+
+									{/* Author Information */}
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+										<div>
+											<label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+												Author Name
+											</label>
+											<input
+												type="text"
+												value={formData.author}
+												onChange={(e) => setFormData(prev => ({ ...prev, author: e.target.value }))}
+												className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+												placeholder="Author's full name"
+												required
+											/>
+										</div>
+										<div>
+											<label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+												Author Email
+											</label>
+											<input
+												type="email"
+												value={formData.authorEmail || ''}
+												onChange={(e) => setFormData(prev => ({ ...prev, authorEmail: e.target.value }))}
+												className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+												placeholder="author@example.com"
+											/>
+										</div>
+									</div>
+
+									{/* Author Bio */}
+									<div>
+										<label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+											Author Bio
+										</label>
+										<textarea
+											value={formData.authorBio || ''}
+											onChange={(e) => setFormData(prev => ({ ...prev, authorBio: e.target.value }))}
+											rows={2}
+											className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+											placeholder="Brief author biography (optional)"
+										/>
+									</div>
+
+									{/* SEO Fields */}
+									<div className="pt-4 border-t border-slate-200 dark:border-slate-600">
+										<h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">SEO Settings</h4>
+
+										<div className="space-y-4">
+											<div>
+												<label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+													Meta Title
+												</label>
+												<input
+													type="text"
+													value={formData.metaTitle || ''}
+													onChange={(e) => setFormData(prev => ({ ...prev, metaTitle: e.target.value }))}
+													className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+													placeholder="SEO title (defaults to post title)"
+													maxLength={60}
+												/>
+												<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+													{formData.metaTitle?.length || 0}/60 characters
+												</p>
+											</div>
+
+											<div>
+												<label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+													Meta Description
+												</label>
+												<textarea
+													value={formData.metaDescription || ''}
+													onChange={(e) => setFormData(prev => ({ ...prev, metaDescription: e.target.value }))}
+													rows={3}
+													className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+													placeholder="Brief description for search engines"
+													maxLength={160}
+												/>
+												<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+													{formData.metaDescription?.length || 0}/160 characters
+												</p>
+											</div>
+
+											{/* SEO Keywords */}
+											<div>
+												<label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+													SEO Keywords
+												</label>
+												<div className="flex items-center space-x-2 mb-2">
+													<input
+														type="text"
+														value={seoKeywordInput}
+														onChange={(e) => setSeoKeywordInput(e.target.value)}
+														onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSeoKeyword())}
+														className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+														placeholder="Add SEO keyword..."
+													/>
+													<button
+														type="button"
+														onClick={addSeoKeyword}
+														className="px-3 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-md hover:bg-slate-300 dark:hover:bg-slate-600"
+													>
+														Add
+													</button>
+												</div>
+												{formData.seoKeywords.length > 0 && (
+													<div className="flex flex-wrap gap-2">
+														{formData.seoKeywords.map((keyword) => (
+															<span
+																key={keyword}
+																className="inline-flex items-center px-2 py-1 rounded-md text-sm bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
+															>
+																{keyword}
+																<button
+																	type="button"
+																	onClick={() => removeSeoKeyword(keyword)}
+																	className="ml-1 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200"
+																>
+																	×
+																</button>
+															</span>
+														))}
+													</div>
+												)}
+											</div>
+
+											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+												<div>
+													<label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+														Canonical URL
+													</label>
+													<input
+														type="url"
+														value={formData.canonicalUrl || ''}
+														onChange={(e) => setFormData(prev => ({ ...prev, canonicalUrl: e.target.value }))}
+														className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+														placeholder="https://example.com/canonical-url"
+													/>
+													<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+														Use if this content appears elsewhere
+													</p>
+												</div>
+												<div>
+													<label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+														Language
+													</label>
+													<select
+														value={formData.language}
+														onChange={(e) => setFormData(prev => ({ ...prev, language: e.target.value }))}
+														className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+													>
+														<option value="en">English</option>
+														<option value="es">Spanish</option>
+														<option value="fr">French</option>
+														<option value="de">German</option>
+														<option value="it">Italian</option>
+														<option value="pt">Portuguese</option>
+														<option value="ja">Japanese</option>
+														<option value="ko">Korean</option>
+														<option value="zh">Chinese</option>
+													</select>
+												</div>
+											</div>
+										</div>
+									</div>
+
+									{/* Post Settings */}
+									<div className="pt-4 border-t border-slate-200 dark:border-slate-600">
+										<h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Post Settings</h4>
+
+										<div className="space-y-4">
+											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+												<div>
+													<label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+														Priority
+													</label>
+													<select
+														value={formData.priority}
+														onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value as 'low' | 'normal' | 'high' }))}
+														className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+													>
+														<option value="low">Low</option>
+														<option value="normal">Normal</option>
+														<option value="high">High</option>
+													</select>
+												</div>
+												<div>
+													<label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+														Reading Time
+													</label>
+													<div className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400">
+														{formData.readingTime ? `${formData.readingTime} min read` : 'Auto-calculated'}
+													</div>
+												</div>
+											</div>
+
+											<div className="flex items-center space-x-3">
+												<input
+													type="checkbox"
+													id="allowComments"
+													checked={formData.allowComments}
+													onChange={(e) => setFormData(prev => ({ ...prev, allowComments: e.target.checked }))}
+													className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 dark:border-slate-600 rounded"
+												/>
+												<label htmlFor="allowComments" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+													Allow comments on this post
+												</label>
+											</div>
+
+											<div>
+												<label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+													Featured Image URL
+												</label>
+												<input
+													type="url"
+													value={formData.featuredImage || ''}
+													onChange={(e) => setFormData(prev => ({ ...prev, featuredImage: e.target.value }))}
+													className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+													placeholder="https://example.com/featured-image.jpg"
+												/>
+												<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+													Used for social media previews and cards
+												</p>
+											</div>
+										</div>
+									</div>
+								</div>
+							)}
+						</div>
+
 						{/* Status */}
 						<div>
 							<label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -530,6 +891,34 @@ export default function NewBlogPost() {
 				) : (
 					/* Preview Mode */
 					<div className="bg-white dark:bg-slate-800 rounded-lg p-8 border border-slate-200 dark:border-slate-700">
+						{/* Post metadata header */}
+						<div className="mb-6 pb-4 border-b border-slate-200 dark:border-slate-700">
+							<div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
+								{formData.author && (
+									<span>By {formData.author}</span>
+								)}
+								{formData.category && (
+									<span className="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded">
+										{formData.category}
+									</span>
+								)}
+								{formData.publishedAt && (
+									<span>
+										{new Date(formData.publishedAt).toLocaleDateString()}
+									</span>
+								)}
+								{formData.readingTime && (
+									<span>{formData.readingTime} min read</span>
+								)}
+								<span className={`px-2 py-1 rounded text-xs ${formData.priority === 'high' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' :
+									formData.priority === 'low' ? 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300' :
+										'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+									}`}>
+									{formData.priority} priority
+								</span>
+							</div>
+						</div>
+
 						<h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-4">
 							{formData.title || 'Untitled Post'}
 						</h1>
@@ -549,21 +938,25 @@ export default function NewBlogPost() {
 							</div>
 						)}
 
-						{/* Rendered HTML Content */}
-						<div className="prose prose-lg dark:prose-invert max-w-none
-							prose-headings:text-slate-900 dark:prose-headings:text-slate-100
-							prose-p:text-slate-700 dark:prose-p:text-slate-300
-							prose-a:text-blue-600 dark:prose-a:text-blue-400
-							prose-code:text-pink-600 dark:prose-code:text-pink-400
-							prose-pre:bg-slate-800 prose-pre:text-slate-100">
+						{/* Featured Image Preview */}
+						{formData.featuredImage && (
+							<div className="mb-6">
+								<img
+									src={formData.featuredImage}
+									alt="Featured image"
+									className="w-full h-64 object-cover rounded-lg"
+									onError={(e) => {
+										e.currentTarget.style.display = 'none'
+									}}
+								/>
+							</div>
+						)}
 
+						{/* Rendered HTML Content */}
+						<div className="prose-custom">
 							{previewHtml ? (
 								<div
 									dangerouslySetInnerHTML={{ __html: previewHtml }}
-									className="[&_.media-figure]:my-6 [&_.media-image]:w-full [&_.media-image]:rounded-lg [&_.media-image]:shadow-md 
-										[&_.media-video]:w-full [&_.media-video]:rounded-lg [&_.media-audio]:w-full 
-										[&_.media-caption]:text-center [&_.media-caption]:text-sm [&_.media-caption]:text-slate-600 [&_.media-caption]:mt-2 [&_.media-caption]:italic
-										[&_.media-error]:bg-red-100 [&_.media-error]:border [&_.media-error]:border-red-300 [&_.media-error]:text-red-700 [&_.media-error]:px-4 [&_.media-error]:py-2 [&_.media-error]:rounded"
 								/>
 							) : (
 								<div className="text-slate-500 dark:text-slate-400 italic">
@@ -571,6 +964,53 @@ export default function NewBlogPost() {
 								</div>
 							)}
 						</div>
+
+						{/* Author Bio */}
+						{formData.authorBio && (
+							<div className="mt-8 pt-4 border-t border-slate-200 dark:border-slate-700">
+								<h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+									About the Author
+								</h4>
+								<p className="text-sm text-slate-600 dark:text-slate-400">
+									{formData.authorBio}
+								</p>
+							</div>
+						)}
+
+						{/* SEO Preview */}
+						{(formData.metaTitle || formData.metaDescription || formData.seoKeywords.length > 0) && (
+							<div className="mt-8 pt-4 border-t border-slate-200 dark:border-slate-700">
+								<h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+									SEO Preview
+								</h4>
+								<div className="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-lg">
+									<div className="text-blue-600 dark:text-blue-400 text-lg mb-1">
+										{formData.metaTitle || formData.title}
+									</div>
+									<div className="text-green-600 dark:text-green-400 text-sm mb-2">
+										{formData.canonicalUrl || `${window.location.origin}/blog/${formData.slug}`}
+									</div>
+									<div className="text-slate-600 dark:text-slate-400 text-sm">
+										{formData.metaDescription || formData.excerpt}
+									</div>
+									{formData.seoKeywords.length > 0 && (
+										<div className="mt-3">
+											<div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Keywords:</div>
+											<div className="flex flex-wrap gap-1">
+												{formData.seoKeywords.map((keyword) => (
+													<span
+														key={keyword}
+														className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300 rounded text-xs"
+													>
+														{keyword}
+													</span>
+												))}
+											</div>
+										</div>
+									)}
+								</div>
+							</div>
+						)}
 
 						{/* Media Usage Info */}
 						{formData.mediaItems.length > 0 && (

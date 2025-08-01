@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { checkAuthFromCookies } from '@/lib/auth'
+import { checkAuthFromCookies } from '@/lib/utils/auth'
 
 // Mock data storage - in production, this would be imported from the main blog route
 // For now, we'll need to implement a shared data store or database

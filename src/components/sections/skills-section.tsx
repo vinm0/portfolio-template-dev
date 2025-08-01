@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { motion } from "framer-motion"
-import { cn } from "lib/utils"
+import { cn } from "@/lib/utils/utils"
 import AnimatedGrid from "../ui/animations/AnimatedGrid"
 
 interface Skill {

@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 import { Github } from 'lucide-react';
 import Link, { LinkProps } from 'next/link';
 import React, { ReactElement } from 'react';

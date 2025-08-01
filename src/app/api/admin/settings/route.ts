@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { checkAuthFromCookies } from '@/lib/auth'
+import { checkAuthFromCookies } from '@/lib/utils/auth'
 
 // Mock settings storage (in production, use a database)
 let siteSettings = {

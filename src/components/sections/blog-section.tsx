@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Calendar, Clock, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react"
-import { cn } from "lib/utils"
+import { cn } from "@/lib/utils/utils"
 
 interface BlogPost {
   id: string
@@ -364,7 +364,7 @@ export function BlogSection() {
                     ))}
                   </div>
 
-                  <div className="prose dark:prose-invert max-w-none">
+                  <div className="prose-custom">
                     <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
                       {expandedPost.content}
                     </p>

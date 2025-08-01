@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { checkAuthFromCookies } from '@/lib/utils/auth'
 
-export default async function ProtectedAdminLayout({
+export default async function ProtectedLayout({
 	children,
 }: {
 	children: React.ReactNode
@@ -15,7 +15,7 @@ export default async function ProtectedAdminLayout({
 	}
 
 	return (
-		<div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+		<>
 			<nav className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 					<div className="flex justify-between h-16">
@@ -64,6 +64,6 @@ export default async function ProtectedAdminLayout({
 			<main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
 				{children}
 			</main>
-		</div>
+		</>
 	)
 }

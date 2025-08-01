@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils/utils"
 import Image from "next/image"
 import { AUTHOR } from "@/lib/constants/brand"
 import Link from "next/link"

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { createAuthToken } from '@/lib/auth'
+import { createAuthToken } from '@/lib/utils/auth'
 
 export async function POST(request: NextRequest) {
 	try {

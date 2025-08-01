@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { motion } from "framer-motion"
 import { Mail, MapPin, Phone, Send, CheckCircle, AlertCircle } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils/utils"
 import { CONTACT } from "@/lib/constants/brand"
 
 interface FormData {

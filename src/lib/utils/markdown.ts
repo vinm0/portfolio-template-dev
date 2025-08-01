@@ -153,11 +153,7 @@ export async function markdownToHtmlPreview(
 			case 'video':
 				previewHtml = `
 <figure class="media-figure">
-  <video 
-    src="${objectUrl}" 
-    controls 
-    class="media-video"
-  >
+  <video src="${objectUrl}" controls class="media-video">
     Your browser does not support the video tag.
   </video>
   ${captionText ? `<figcaption class="media-caption">${captionText}</figcaption>` : ''}
